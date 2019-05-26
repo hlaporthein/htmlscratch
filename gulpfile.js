@@ -32,7 +32,8 @@ function cp_watch_helper_css_js(enviroment = pro, reload=true) {
     }
 
     if ( runCount == 1 ) {
-        return gulp.parallel('pro-style', 'pro-script');
+        cp_style_export_helper(enviroment);
+        cp_js_helper_export(enviroment)
         runCount = +1;
     }
 }
@@ -58,9 +59,17 @@ function cp_css_dev_helper(sources,output = 'pro', filename, source_maps = true)
 
 function cp_style_export_helper(enviroment) {
 
-    var sass_output_name = ( enviroment == 'pro' ) ? 'sass-output.min.css' : 'sass-output.css';
-    var normal_css_output_name = ( enviroment == 'pro' ) ? 'normal-style-output.min.css' : 'normal-style-output.css';
-    var compile_css_file_name = ( enviroment == 'pro' ) ? 'style.min.css' : 'style.css';
+    var sass_output_name = 'sass-output.css';
+    var normal_css_output_name = 'normal-style-output.css';
+    var compile_css_file_name = 'style.css';
+
+    if ( enviroment === 'pro' ) {
+
+        sass_output_name = 'sass-output.min.css';
+        normal_css_output_name = 'normal-style-output.min.css';
+        compile_css_file_name = 'style.min.css';
+
+    }
 
     var stream = streamqueue({ objectMode: true },
         gulp.src(paths.wp_stylesheet),
@@ -74,6 +83,29 @@ function cp_style_export_helper(enviroment) {
     return stream;
 
 }
+
+
+function cp_js_helper_export(enviroment){
+
+    if ( enviroment !== 'pro' ) {
+
+        var stream = gulp.src( paths.js_file_list )
+            .pipe( concat( 'script.js' ) )
+            .pipe( gulp.dest( paths.js ) );
+
+    } else {
+
+        var stream = gulp.src( paths.js_file_list )
+            .pipe( concat( 'script.min.js' ) )
+            .pipe( uglify() )
+            .pipe( gulp.dest( paths.dist + '/js' ) );
+
+    }
+
+    return stream;
+
+}
+
 
 gulp.task('pro-style', function(){
     return cp_style_export_helper('pro');
@@ -105,22 +137,12 @@ gulp.task('pro-sass', function(){
 
 
 gulp.task('dev-script', function(){
-    var stream = gulp.src( paths.js_file_list )
-        .pipe( concat( 'script.js' ) )
-        .pipe( gulp.dest( paths.js ) );
-
-    return stream;
+    return cp_js_helper_export('dev');
 });
 
 gulp.task('pro-script', function(){
-    var stream = gulp.src( paths.js_file_list )
-        .pipe( concat( 'script.min.js' ) )
-        .pipe( uglify() )
-        .pipe( gulp.dest( paths.dist + '/js' ) );
-
-    return stream;
+    return cp_js_helper_export('pro');
 });
-
 
 
 
